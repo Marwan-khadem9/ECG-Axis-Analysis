@@ -11,7 +11,6 @@ import os
 # Set page config
 st.set_page_config(
     page_title="ECG Analysis Tool",
-    page_icon="❤️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
