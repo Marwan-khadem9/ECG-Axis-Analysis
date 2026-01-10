@@ -266,7 +266,7 @@ class HeartRate:
                 max_idx = coord[np.argmax(self.signal[coord])]
                 self.result.append(max_idx)
 
-    def warmup(self, passes=2):
+    def warmup(self, passes=4):
         """Run multiple passes over the signal to stabilize internal thresholds."""
         for _ in range(passes):
             self.detect(update_only=True)
@@ -306,7 +306,7 @@ def load_dat_file(uploaded_file):
 
 # === ANALYSIS FUNCTIONS ===
 
-def process_ecg_signal(lead1, lead2, lead3, fs=200):
+def process_ecg_signal(lead1, lead2, lead3, fs=200*3):
     """Process ECG signals through complete pipeline"""
     
     # Baseline wander removal
@@ -348,8 +348,8 @@ def calculate_heart_rate(r_peaks, fs):
         return 0
     
     rr_intervals = np.diff(r_peaks) / fs  # Convert to seconds
-    mean_rr = np.mean(rr_intervals)
-    hr_bpm = 60 / mean_rr
+    median_rr = np.median(rr_intervals)
+    hr_bpm = 60 / median_rr
     return hr_bpm
 
 def calculate_ecg_axis(lead1_peaks, lead2_peaks, lead3_peaks, filtered_lead1, filtered_lead2, filtered_lead3):
@@ -359,7 +359,7 @@ def calculate_ecg_axis(lead1_peaks, lead2_peaks, lead3_peaks, filtered_lead1, fi
         if len(peaks) == 0:
             return 0
         amplitudes = [signal[peak] for peak in peaks]
-        return np.mean(amplitudes)
+        return np.median(amplitudes)
     
     # Get average QRS amplitudes for each lead
     amp1 = get_qrs_amplitude(filtered_lead1, lead1_peaks)
@@ -384,7 +384,9 @@ def plot_ecg_with_peaks(time_index, original_signals, filtered_signals, r_peaks_
     lead_colors = ['tab:blue', 'tab:orange', 'tab:green']
     lead_names = ['Lead I', 'Lead II', 'Lead III']
     
-    time_index_in_secs = time_index / fs
+    # time_index_in_secs = time_index / fs # this won't work because number of samples and pixels is not the same. time_index is in pixels, but fs is samples/s
+    time_index_in_secs = np.arange(len(time_index)) / fs  # numerator becomes an array of samples. so the unit in the numerator is samples
+    # time_index_in_secs = time_index / (fs/3) # fs/3 is makes the denominator unit to be pixels/s
     
     for i, (ax, original, filtered, rpeaks, name, color) in enumerate(zip(
         axs,
@@ -394,14 +396,14 @@ def plot_ecg_with_peaks(time_index, original_signals, filtered_signals, r_peaks_
         lead_names,
         lead_colors
     )):
-        ax.plot(time_index_in_secs, original, label='Original ' + name, color=color, alpha=0.4)
-        ax.plot(time_index_in_secs, filtered, label='Filtered ' + name, color=color, linewidth=1.5)
+        ax.plot(time_index_in_secs, original/80, label='Original ' + name, color=color, alpha=0.4)
+        ax.plot(time_index_in_secs, filtered/80, label='Filtered ' + name, color=color, linewidth=1.5)
         
         if len(rpeaks) > 0:
             ax.scatter(time_index_in_secs[rpeaks], filtered[rpeaks], 
                       color='red', marker='*', s=50, label='R-peaks')
         
-        ax.set_ylabel("Amplitude (pixels)")
+        ax.set_ylabel("Amplitude (mV)")
         ax.set_title(f"{name} - Original & Baseline Corrected with R-peaks")
         ax.grid(True)
         ax.legend(loc='upper right')
@@ -496,7 +498,7 @@ def main():
     )
     
     st.sidebar.header("⚙️ Parameters")
-    fs = st.sidebar.number_input("Sampling Frequency (Hz)", value=200, min_value=50, max_value=1000)
+    fs = st.sidebar.number_input("Sampling Frequency (Hz)", value=200*3, min_value=50, max_value=1000)
     
     if uploaded_file is not None:
         try:
@@ -591,7 +593,7 @@ def main():
                         st.markdown("#### Heart Rate Analysis (Lead II):")
                         col1, col2 = st.columns(2)
                         with col1:
-                            st.metric("Mean RR Interval", f"{np.mean(rr_intervals):.3f} sec")
+                            st.metric("Median RR Interval", f"{np.median(rr_intervals):.3f} sec")
                             st.metric("Min RR Interval", f"{np.min(rr_intervals):.3f} sec")
                         with col2:
                             st.metric("Max RR Interval", f"{np.max(rr_intervals):.3f} sec")
@@ -715,7 +717,7 @@ Lead III: {list(r_peaks[2])}
         
         ### Getting Started:
         1. Upload your `.dat` file using the sidebar
-        2. Adjust sampling frequency if needed (default: 200 Hz)
+        2. Adjust sampling frequency if needed (default: 200*3 = 600 Hz)
         3. View the analysis results and visualizations
         4. Download the analysis report
         
@@ -726,11 +728,11 @@ Lead III: {list(r_peaks[2])}
         with st.expander("📄 View Expected File Format"):
             st.code("""
 time_index  lead1       lead2       lead3
-0           -0.025      0.125       0.150
-1           -0.020      0.130       0.145
-2           -0.015      0.135       0.140
-3           -0.010      0.140       0.135
-4           -0.005      0.145       0.130
+0.00        -0.025      0.125       0.150
+0.33        -0.020      0.130       0.145
+0.67        -0.015      0.135       0.140
+1.00        -0.010      0.140       0.135
+1.33        -0.005      0.145       0.130
 ...         ...         ...         ...
             """, language="text")
 
