@@ -634,7 +634,7 @@ def main():
                         fig_pipeline, axs_pipeline = plt.subplots(4, 1, figsize=(14, 10), sharex=True)
                         
                         time_samples = np.arange(len(bpass_temp))
-                        time_seconds = time_samples / 200
+                        time_seconds = time_samples / fs
 
                         axs_pipeline[0].plot(time_seconds, bpass_temp, color='blue', label='Bandpass Filtered')
                         axs_pipeline[0].set_title("1. Bandpass Filtered Signal (5-35 Hz)")
@@ -686,9 +686,9 @@ ECG Electrical Axis:
 - Classification: {axis_classification}
 
 R-peak Positions (seconds):
-Lead I: {[x / 200 for x in r_peaks[0]]}
-Lead II: {[x / 200 for x in r_peaks[1]]}
-Lead III: {[x / 200 for x in r_peaks[2]]}
+Lead I: {[x / fs for x in r_peaks[0]]}
+Lead II: {[x / fs for x in r_peaks[1]]}
+Lead III: {[x / fs for x in r_peaks[2]]}
 """
                 
                 st.download_button(
