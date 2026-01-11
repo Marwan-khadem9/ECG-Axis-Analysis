@@ -400,7 +400,7 @@ def plot_ecg_with_peaks(time_index, original_signals, filtered_signals, r_peaks_
         ax.plot(time_index_in_secs, filtered/80, label='Filtered ' + name, color=color, linewidth=1.5)
         
         if len(rpeaks) > 0:
-            ax.scatter(time_index_in_secs[rpeaks], filtered[rpeaks], 
+            ax.scatter(time_index_in_secs[rpeaks], filtered[rpeaks]/80, 
                       color='red', marker='*', s=50, label='R-peaks')
         
         ax.set_ylabel("Amplitude (mV)")
@@ -634,26 +634,27 @@ def main():
                         fig_pipeline, axs_pipeline = plt.subplots(4, 1, figsize=(14, 10), sharex=True)
                         
                         time_samples = np.arange(len(bpass_temp))
-                        
-                        axs_pipeline[0].plot(time_samples, bpass_temp, color='blue', label='Bandpass Filtered')
+                        time_seconds = time_samples / 200
+
+                        axs_pipeline[0].plot(time_seconds, bpass_temp, color='blue', label='Bandpass Filtered')
                         axs_pipeline[0].set_title("1. Bandpass Filtered Signal (5-35 Hz)")
                         axs_pipeline[0].set_ylabel("Amplitude")
                         axs_pipeline[0].grid(True)
                         axs_pipeline[0].legend()
                         
-                        axs_pipeline[1].plot(time_samples, der_temp, color='orange', label='Derivative')
+                        axs_pipeline[1].plot(time_seconds, der_temp, color='orange', label='Derivative')
                         axs_pipeline[1].set_title("2. Derivative Signal")
                         axs_pipeline[1].set_ylabel("Amplitude")
                         axs_pipeline[1].grid(True)
                         axs_pipeline[1].legend()
-                        
-                        axs_pipeline[2].plot(time_samples, sqr_temp, color='red', label='Squared')
+
+                        axs_pipeline[2].plot(time_seconds, sqr_temp, color='red', label='Squared')
                         axs_pipeline[2].set_title("3. Squared Signal")
                         axs_pipeline[2].set_ylabel("Amplitude")
                         axs_pipeline[2].grid(True)
                         axs_pipeline[2].legend()
                         
-                        axs_pipeline[3].plot(time_samples, mwin_temp, color='green', label='Moving Window Integrated')
+                        axs_pipeline[3].plot(time_seconds, mwin_temp, color='green', label='Moving Window Integrated')
                         axs_pipeline[3].set_title("4. Moving Window Integrated Signal")
                         axs_pipeline[3].set_ylabel("Amplitude")
                         axs_pipeline[3].set_xlabel("Sample Number")
@@ -684,10 +685,10 @@ ECG Electrical Axis:
 - Axis Angle: {ecg_axis:.1f}°
 - Classification: {axis_classification}
 
-R-peak Positions (samples):
-Lead I: {list(r_peaks[0])}
-Lead II: {list(r_peaks[1])}
-Lead III: {list(r_peaks[2])}
+R-peak Positions (seconds):
+Lead I: {[x / 200 for x in r_peaks[0]]}
+Lead II: {[x / 200 for x in r_peaks[1]]}
+Lead III: {[x / 200 for x in r_peaks[2]]}
 """
                 
                 st.download_button(
